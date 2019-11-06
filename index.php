@@ -2,8 +2,8 @@
 session_start();
     
 include 'Class/Crud.php';    
-if(isset($_SESSION['NOME'])){
-    echo $_SESSION['NOME'];
+if(isset($_SESSION['FUNCIONARIO'])){
+    echo $_SESSION['FUNCIONARIO'];
 }else{
     echo "Entre";
 }
