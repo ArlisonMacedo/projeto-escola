@@ -88,7 +88,7 @@
             }
         }
 
-        /**Funcções para o Aluno da instituição */
+        /**@Funcções para o Aluno da instituição */
         public function selectAluno(){
             $row = array();
             $sql = "SELECT * FROM Alunos as Al left join CURSO as C on (Al.MAT = C.Alunos_MAT)";
@@ -97,6 +97,24 @@
                 $stmt = $this->connectionDB()->query($sql);
                 $stmt->execute();
                 $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                return $row;
+            } catch (PDOException $th) {
+                //throw $th;
+                echo "Erro ".$th->getMessage();
+            }
+        }
+
+        public function selectUpdate(Aluno $aluno){
+            $sql = "SELECT * FROM Alunos as Al LEFT JOIN CURSO as C ON Al.MAT = C.Alunos_MAT 
+            WHERE MAT = :MAT";
+            
+            try {
+                //code...
+                $stmt = $this->connectionDB()->prepare($sql);
+                $stmt->bindValue(":MAT",$aluno->getMat());
+                $stmt->execute();
+                $row = array();
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
                 return $row;
             } catch (PDOException $th) {
                 //throw $th;
@@ -148,9 +166,57 @@
         }
 
         public function inserirCurso(Curso $curso){
-            $sql = "INSERT INTO CURSO VALUES (null,:curso,:diciplina,:nota1,:nota2,:situacao,:Alunos_MAT)";
+            $sql = "INSERT INTO CURSO VALUES (null,:curso,:diciplina,:nota1,:nota2,:media,:Alunos_MAT)";
             try {
                 //code...
+                $stmt = $this->connectionDB()->prepare($sql);
+                $stmt->bindValue(":curso",$curso->getNome_curso());
+                $stmt->bindValue(":diciplina",$curso->getDiciplina());
+                $stmt->bindValue(":nota1",$curso->getNota1());
+                $stmt->bindValue(":nota2",$curso->getNota2());
+                $stmt->bindValue(":media",($curso->getNota1() + $curso->getNota2()) / 2);
+                $stmt->bindValue(":Alunos_MAT",$curso->getAlunos_MAT());
+                if($stmt->execute()){
+                    header("Location: ../dashboard.php");
+                }
+            } catch (PDOException $th) {
+                //throw $th;
+                echo "Erro ".$th->getMessage();
+            }
+        }
+
+        public function atualizar(Curso $curso, Aluno $aluno){
+            $upAluno = "UPDATE Alunos set NOMEALUNO = :nome, CPF = :cpf, Data_nasc = :data_nasc 
+            WHERE MAT = :MAT";
+            
+            $upCurso = "UPDATE CURSO SET cUrSo = :curso, DICIPLINA = :diciplina, nota1 = :nota1,
+            nota2 = :nota2, MEDIA = (:nota1+:nota2) / 2 WHERE ID = :ID";
+
+            $boolC = false;
+            $boolA = false;
+            
+            try {
+                //code...
+                $stmt = $this->connectionDB()->prepare($upCurso);
+                $stmt->bindValue(":curso",$curso->getNome_curso());
+                $stmt->bindValue(":diciplina",$curso->getDiciplina());
+                $stmt->bindValue(":nota1",$curso->getNota1());
+                $stmt->bindValue(":nota2",$curso->getNota2());
+                $stmt->bindValue(":ID",$curso->getID());
+                if($stmt->execute()){
+                   $boolC = true;
+                }
+                $stud = $this->connectionDB()->prepare($upAluno);
+                $stud->bindValue(":nome",$aluno->getNome());
+                $stud->bindValue(":cpf",$aluno->getCpf());
+                $stud->bindValue(":data_nasc",$aluno->getData_nasc());
+                $stud->bindValue(":MAT",$aluno->getMat());
+                if($stud->execute()){
+                    $boolA = true;
+                }
+                if($boolC && $boolA){
+                    header("Location: ../dashboard.php");
+                }
             } catch (PDOException $th) {
                 //throw $th;
                 echo "Erro ".$th->getMessage();
